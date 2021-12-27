@@ -1,5 +1,17 @@
 version: 2.1
 
+commands:
+  destroy_environment:
+    steps:
+      - run:
+          name: Destroy environment
+          # ${CIRCLE_WORKFLOW_ID} is a Built-in environment variable 
+          # ${CIRCLE_WORKFLOW_ID:0:5} takes the first 5 chars of the variable CIRCLE_CI_WORKFLOW_ID 
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
+            
+
 jobs:
   create_infrastructure: 
       docker:
@@ -13,13 +25,14 @@ jobs:
                 --template-file template.yaml \
                 --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
                 --region us-east-2
+                
   configure_infrastructure: 
     docker:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["d1:2b:47:5b:55:3e:79:c9:ce:58:03:48:8a:57:99:64"] # You can get this ID in the section where you registered the SSH Key
+          fingerprints: ["74:c8:5b:a6:e2:2c:40:51:5f:75:ae:47:a8:77:91:d6"] # You can get this ID in the section where you registered the SSH Key
       - run:
           name: Install dependencies
           command: |
@@ -38,20 +51,21 @@ jobs:
       - run:
           name: smoke test
           command: |
-            URL="https://blog.udacity.com/"
+            URL="https://blog.udacity333333333333333.com/"
             # Test if website exists
             if curl -s --head ${URL} 
             then
               return 0
             else
               return 1
-            fi  
+            fi
+      - destroy_environment      
               
 
 workflows:
   my_workflow:
       jobs:
-    #    - create_infrastructure
+        - create_infrastructure
     #    - configure_infrastructure
         - smoke_test  
         
