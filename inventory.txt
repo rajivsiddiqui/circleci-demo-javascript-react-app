@@ -1,2 +1,2 @@
 [all]
-ec2-18-217-143-34.us-east-2.compute.amazonaws.com
+198.205.119.141
