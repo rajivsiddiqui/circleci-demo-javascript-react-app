@@ -11,18 +11,27 @@ version: 2.1
 #           command: |
 #             #aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
 #             aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID} 
+# commands:
+#   destroy_environment:
+#     description: Destroy back-end and front-end cloudformation stacks given a workflow ID. 
+#     parameters:
+#       workflow_id:
+#         type: string 
+#     steps:
+#       - run:
+#           name: Destroy environments
+#           when: on_fail 
+#           command: |
+#             aws cloudformation delete-stack --stack-name "myStack-${CIRCLE_WORKFLOW_ID}"  
 commands:
-  destroy_environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID. 
-    parameters:
-      workflow_id:
-        type: string 
-    steps:
-      - run:
-          name: Destroy environments
-          when: on_fail 
-          command: |
-            aws cloudformation delete-stack --stack-name "myStack-${CIRCLE_WORKFLOW_ID}"            
+   # Exercise - Rollback
+   destroy_environment:
+     steps:
+       - run:
+           name: Destroy environment
+           when: on_fail
+           command: |
+             aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7}            
             
 
 jobs:
@@ -36,7 +45,7 @@ jobs:
             command: |
               aws cloudformation deploy \
                 --template-file template.yaml \
-                --stack-name myStack-${CIRCLE_WORKFLOW_ID} \
+                --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7} \
                 --region us-east-2
                 
   configure_infrastructure: 
@@ -56,16 +65,14 @@ jobs:
           command: |
             ansible-playbook -i inventory.txt main4.yml
     
-  smoke_test:
-    docker:
-      - image: alpine:latest
-    steps:
-      - run: apk add --update curl
-      - run:
-          name: smoke test
-          command: return 1            
-      - destroy_environment
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+ smoke_test:
+   docker:
+    - image: alpine:latest
+   steps:
+    - run:
+       name: Test job
+       command:  return 1
+    - destroy_environment  
               
 
 workflows:
